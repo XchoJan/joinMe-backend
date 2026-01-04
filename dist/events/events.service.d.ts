@@ -1,0 +1,31 @@
+import { Repository } from 'typeorm';
+import { Event } from '../entities/event.entity';
+import { EventRequest } from '../entities/event-request.entity';
+import { Chat } from '../entities/chat.entity';
+import { Message } from '../entities/message.entity';
+import { User } from '../entities/user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UsersService } from '../users/users.service';
+export declare class EventsService {
+    private eventsRepository;
+    private requestsRepository;
+    private chatsRepository;
+    private messagesRepository;
+    private usersRepository;
+    private notificationsService;
+    private usersService;
+    constructor(eventsRepository: Repository<Event>, requestsRepository: Repository<EventRequest>, chatsRepository: Repository<Chat>, messagesRepository: Repository<Message>, usersRepository: Repository<User>, notificationsService: NotificationsService, usersService: UsersService);
+    create(eventData: Partial<Event>): Promise<Event>;
+    findAll(city?: string): Promise<Event[]>;
+    findOne(id: string): Promise<Event | null>;
+    findByAuthor(authorId: string): Promise<Event[]>;
+    findByParticipant(userId: string): Promise<Event[]>;
+    update(id: string, eventData: Partial<Event>): Promise<Event | null>;
+    createRequest(eventId: string, userId: string): Promise<EventRequest>;
+    getRequests(eventId: string): Promise<EventRequest[]>;
+    approveRequest(requestId: string): Promise<Event>;
+    rejectRequest(requestId: string): Promise<void>;
+    delete(id: string, authorId: string): Promise<boolean>;
+    removeParticipant(eventId: string, userId: string, authorId: string): Promise<Event>;
+    leaveEvent(eventId: string, userId: string): Promise<Event>;
+}
