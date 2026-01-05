@@ -8,12 +8,14 @@ import { EventsModule } from './events/events.module';
 import { ChatsModule } from './chats/chats.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { UploadModule } from './upload/upload.module';
+import { AdminModule } from './admin/admin.module';
 import { User } from './entities/user.entity';
 import { Event } from './entities/event.entity';
 import { EventRequest } from './entities/event-request.entity';
 import { Chat } from './entities/chat.entity';
 import { Message } from './entities/message.entity';
 import { BlockedUser } from './entities/blocked-user.entity';
+import { AnalyticsEvent } from './entities/analytics-event.entity';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { BlockedUser } from './entities/blocked-user.entity';
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
       database: 'joinme.db',
-      entities: [User, Event, EventRequest, Chat, Message, BlockedUser],
+      entities: [User, Event, EventRequest, Chat, Message, BlockedUser, AnalyticsEvent],
       synchronize: true, // Only for development
     }),
     UsersModule,
@@ -31,6 +33,7 @@ import { BlockedUser } from './entities/blocked-user.entity';
     ChatsModule,
     NotificationsModule,
     UploadModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

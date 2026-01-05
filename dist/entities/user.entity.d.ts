@@ -8,6 +8,9 @@ export declare class User {
     instagram?: string;
     telegram?: string;
     fcmToken?: string;
+    premium: boolean;
+    username?: string;
+    password?: string;
     createdAt: Date;
     updatedAt: Date;
 }

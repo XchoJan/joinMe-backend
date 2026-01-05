@@ -8,6 +8,8 @@ import { Message } from '../entities/message.entity';
 import { User } from '../entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsEventType } from '../entities/analytics-event.entity';
 
 @Injectable()
 export class EventsService {
@@ -24,6 +26,7 @@ export class EventsService {
     private usersRepository: Repository<User>,
     private notificationsService: NotificationsService,
     private usersService: UsersService,
+    private analyticsService: AnalyticsService,
   ) {}
 
   async create(eventData: Partial<Event>): Promise<Event> {
@@ -51,7 +54,16 @@ export class EventsService {
       currentParticipants: validCurrentParticipants,
       participants: eventData.authorId ? [eventData.authorId] : [],
     } as Event);
-    return await this.eventsRepository.save(event);
+    const savedEvent = await this.eventsRepository.save(event);
+    
+    // Логируем создание события
+    await this.analyticsService.logEvent(
+      AnalyticsEventType.EVENT_CREATED,
+      savedEvent.authorId,
+      savedEvent.id,
+    );
+    
+    return savedEvent;
   }
 
   async findAll(city?: string): Promise<Event[]> {
@@ -129,6 +141,13 @@ export class EventsService {
       status: 'pending',
     });
     const savedRequest = await this.requestsRepository.save(request);
+
+    // Логируем создание отклика на событие
+    await this.analyticsService.logEvent(
+      AnalyticsEventType.EVENT_REQUEST_CREATED,
+      userId,
+      eventId,
+    );
 
     // Отправляем push-уведомление автору события
     try {

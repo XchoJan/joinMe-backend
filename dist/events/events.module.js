@@ -18,6 +18,7 @@ const message_entity_1 = require("../entities/message.entity");
 const user_entity_1 = require("../entities/user.entity");
 const notifications_module_1 = require("../notifications/notifications.module");
 const users_module_1 = require("../users/users.module");
+const analytics_module_1 = require("../analytics/analytics.module");
 let EventsModule = class EventsModule {
 };
 exports.EventsModule = EventsModule;
@@ -27,6 +28,7 @@ exports.EventsModule = EventsModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([event_entity_1.Event, event_request_entity_1.EventRequest, chat_entity_1.Chat, message_entity_1.Message, user_entity_1.User]),
             notifications_module_1.NotificationsModule,
             users_module_1.UsersModule,
+            analytics_module_1.AnalyticsModule,
         ],
         controllers: [events_controller_1.EventsController],
         providers: [events_service_1.EventsService],

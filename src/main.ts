@@ -7,6 +7,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
+  // Set global prefix for all routes
+  app.setGlobalPrefix('api');
+  
   // Enable CORS for React Native
   app.enableCors({
     origin: true,

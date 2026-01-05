@@ -39,6 +39,15 @@ export class User {
   @Column({ nullable: true })
   fcmToken?: string;
 
+  @Column({ default: false })
+  premium: boolean;
+
+  @Column({ nullable: true, unique: true })
+  username?: string;
+
+  @Column({ nullable: true })
+  password?: string; // Хешированный пароль
+
   @CreateDateColumn()
   createdAt: Date;
 

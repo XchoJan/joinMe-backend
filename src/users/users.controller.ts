@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   HttpCode,
@@ -11,6 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('users')
 export class UsersController {
@@ -24,11 +26,22 @@ export class UsersController {
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<User | null> {
-    const user = await this.usersService.findOne(id);
-    if (!user) {
-      throw new Error('User not found');
+    try {
+      const user = await this.usersService.findOne(id);
+      if (!user) {
+        // Возвращаем 404 вместо 500 для несуществующих пользователей
+        throw new Error('User not found');
+      }
+      return user;
+    } catch (error: any) {
+      console.error('Error in findOne:', error);
+      // Если это наша ошибка "User not found", пробрасываем дальше
+      if (error.message === 'User not found') {
+        throw error;
+      }
+      // Для других ошибок пробрасываем как есть
+      throw error;
     }
-    return user;
   }
 
   @Put(':id')
@@ -98,6 +111,24 @@ export class UsersController {
   ): Promise<{ blocked: boolean }> {
     const blocked = await this.usersService.isBlocked(blockerId, blockedUserId);
     return { blocked };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  async delete(@Param('id') id: string): Promise<{ success: boolean }> {
+    try {
+      await this.usersService.delete(id);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error in delete user controller:', error);
+      throw error;
+    }
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto): Promise<User> {
+    return await this.usersService.login(loginDto.username, loginDto.password);
   }
 }
 

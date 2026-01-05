@@ -6,6 +6,7 @@ import { Message } from '../entities/message.entity';
 import { User } from '../entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 export declare class EventsService {
     private eventsRepository;
     private requestsRepository;
@@ -14,7 +15,8 @@ export declare class EventsService {
     private usersRepository;
     private notificationsService;
     private usersService;
-    constructor(eventsRepository: Repository<Event>, requestsRepository: Repository<EventRequest>, chatsRepository: Repository<Chat>, messagesRepository: Repository<Message>, usersRepository: Repository<User>, notificationsService: NotificationsService, usersService: UsersService);
+    private analyticsService;
+    constructor(eventsRepository: Repository<Event>, requestsRepository: Repository<EventRequest>, chatsRepository: Repository<Chat>, messagesRepository: Repository<Message>, usersRepository: Repository<User>, notificationsService: NotificationsService, usersService: UsersService, analyticsService: AnalyticsService);
     create(eventData: Partial<Event>): Promise<Event>;
     findAll(city?: string): Promise<Event[]>;
     findOne(id: string): Promise<Event | null>;

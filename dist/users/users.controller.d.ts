@@ -1,6 +1,7 @@
 import { UsersService } from './users.service';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
 export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
@@ -23,4 +24,8 @@ export declare class UsersController {
     isBlocked(blockerId: string, blockedUserId: string): Promise<{
         blocked: boolean;
     }>;
+    delete(id: string): Promise<{
+        success: boolean;
+    }>;
+    login(loginDto: LoginDto): Promise<User>;
 }

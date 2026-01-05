@@ -17,12 +17,14 @@ const events_module_1 = require("./events/events.module");
 const chats_module_1 = require("./chats/chats.module");
 const notifications_module_1 = require("./notifications/notifications.module");
 const upload_module_1 = require("./upload/upload.module");
+const admin_module_1 = require("./admin/admin.module");
 const user_entity_1 = require("./entities/user.entity");
 const event_entity_1 = require("./entities/event.entity");
 const event_request_entity_1 = require("./entities/event-request.entity");
 const chat_entity_1 = require("./entities/chat.entity");
 const message_entity_1 = require("./entities/message.entity");
 const blocked_user_entity_1 = require("./entities/blocked-user.entity");
+const analytics_event_entity_1 = require("./entities/analytics-event.entity");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -35,7 +37,7 @@ exports.AppModule = AppModule = __decorate([
             typeorm_1.TypeOrmModule.forRoot({
                 type: 'better-sqlite3',
                 database: 'joinme.db',
-                entities: [user_entity_1.User, event_entity_1.Event, event_request_entity_1.EventRequest, chat_entity_1.Chat, message_entity_1.Message, blocked_user_entity_1.BlockedUser],
+                entities: [user_entity_1.User, event_entity_1.Event, event_request_entity_1.EventRequest, chat_entity_1.Chat, message_entity_1.Message, blocked_user_entity_1.BlockedUser, analytics_event_entity_1.AnalyticsEvent],
                 synchronize: true,
             }),
             users_module_1.UsersModule,
@@ -43,6 +45,7 @@ exports.AppModule = AppModule = __decorate([
             chats_module_1.ChatsModule,
             notifications_module_1.NotificationsModule,
             upload_module_1.UploadModule,
+            admin_module_1.AdminModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

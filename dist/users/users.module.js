@@ -16,12 +16,17 @@ const blocked_user_entity_1 = require("../entities/blocked-user.entity");
 const event_entity_1 = require("../entities/event.entity");
 const chat_entity_1 = require("../entities/chat.entity");
 const event_request_entity_1 = require("../entities/event-request.entity");
+const message_entity_1 = require("../entities/message.entity");
+const analytics_module_1 = require("../analytics/analytics.module");
 let UsersModule = class UsersModule {
 };
 exports.UsersModule = UsersModule;
 exports.UsersModule = UsersModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, blocked_user_entity_1.BlockedUser, event_entity_1.Event, chat_entity_1.Chat, event_request_entity_1.EventRequest])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, blocked_user_entity_1.BlockedUser, event_entity_1.Event, chat_entity_1.Chat, event_request_entity_1.EventRequest, message_entity_1.Message]),
+            analytics_module_1.AnalyticsModule,
+        ],
         controllers: [users_controller_1.UsersController],
         providers: [users_service_1.UsersService],
         exports: [users_service_1.UsersService],

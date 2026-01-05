@@ -16,6 +16,7 @@ exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("./users.service");
 const create_user_dto_1 = require("./dto/create-user.dto");
+const login_dto_1 = require("./dto/login.dto");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -25,11 +26,20 @@ let UsersController = class UsersController {
         return await this.usersService.create(userData);
     }
     async findOne(id) {
-        const user = await this.usersService.findOne(id);
-        if (!user) {
-            throw new Error('User not found');
+        try {
+            const user = await this.usersService.findOne(id);
+            if (!user) {
+                throw new Error('User not found');
+            }
+            return user;
         }
-        return user;
+        catch (error) {
+            console.error('Error in findOne:', error);
+            if (error.message === 'User not found') {
+                throw error;
+            }
+            throw error;
+        }
     }
     async update(id, userData) {
         const user = await this.usersService.update(id, userData);
@@ -67,6 +77,19 @@ let UsersController = class UsersController {
     async isBlocked(blockerId, blockedUserId) {
         const blocked = await this.usersService.isBlocked(blockerId, blockedUserId);
         return { blocked };
+    }
+    async delete(id) {
+        try {
+            await this.usersService.delete(id);
+            return { success: true };
+        }
+        catch (error) {
+            console.error('Error in delete user controller:', error);
+            throw error;
+        }
+    }
+    async login(loginDto) {
+        return await this.usersService.login(loginDto.username, loginDto.password);
     }
 };
 exports.UsersController = UsersController;
@@ -141,6 +164,22 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "isBlocked", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "delete", null);
+__decorate([
+    (0, common_1.Post)('login'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [login_dto_1.LoginDto]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "login", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     __metadata("design:paramtypes", [users_service_1.UsersService])

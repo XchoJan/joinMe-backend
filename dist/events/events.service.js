@@ -23,6 +23,8 @@ const message_entity_1 = require("../entities/message.entity");
 const user_entity_1 = require("../entities/user.entity");
 const notifications_service_1 = require("../notifications/notifications.service");
 const users_service_1 = require("../users/users.service");
+const analytics_service_1 = require("../analytics/analytics.service");
+const analytics_event_entity_1 = require("../entities/analytics-event.entity");
 let EventsService = class EventsService {
     eventsRepository;
     requestsRepository;
@@ -31,7 +33,8 @@ let EventsService = class EventsService {
     usersRepository;
     notificationsService;
     usersService;
-    constructor(eventsRepository, requestsRepository, chatsRepository, messagesRepository, usersRepository, notificationsService, usersService) {
+    analyticsService;
+    constructor(eventsRepository, requestsRepository, chatsRepository, messagesRepository, usersRepository, notificationsService, usersService, analyticsService) {
         this.eventsRepository = eventsRepository;
         this.requestsRepository = requestsRepository;
         this.chatsRepository = chatsRepository;
@@ -39,6 +42,7 @@ let EventsService = class EventsService {
         this.usersRepository = usersRepository;
         this.notificationsService = notificationsService;
         this.usersService = usersService;
+        this.analyticsService = analyticsService;
     }
     async create(eventData) {
         let authorGender;
@@ -56,7 +60,9 @@ let EventsService = class EventsService {
             currentParticipants: validCurrentParticipants,
             participants: eventData.authorId ? [eventData.authorId] : [],
         });
-        return await this.eventsRepository.save(event);
+        const savedEvent = await this.eventsRepository.save(event);
+        await this.analyticsService.logEvent(analytics_event_entity_1.AnalyticsEventType.EVENT_CREATED, savedEvent.authorId, savedEvent.id);
+        return savedEvent;
     }
     async findAll(city) {
         const query = this.eventsRepository
@@ -117,6 +123,7 @@ let EventsService = class EventsService {
             status: 'pending',
         });
         const savedRequest = await this.requestsRepository.save(request);
+        await this.analyticsService.logEvent(analytics_event_entity_1.AnalyticsEventType.EVENT_REQUEST_CREATED, userId, eventId);
         try {
             if (event && event.authorId) {
                 const author = await this.usersRepository.findOne({
@@ -334,6 +341,7 @@ exports.EventsService = EventsService = __decorate([
         typeorm_2.Repository,
         typeorm_2.Repository,
         notifications_service_1.NotificationsService,
-        users_service_1.UsersService])
+        users_service_1.UsersService,
+        analytics_service_1.AnalyticsService])
 ], EventsService);
 //# sourceMappingURL=events.service.js.map
