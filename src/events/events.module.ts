@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
+import { EventsScheduler } from './events.scheduler';
 import { Event } from '../entities/event.entity';
 import { EventRequest } from '../entities/event-request.entity';
 import { Chat } from '../entities/chat.entity';
@@ -19,7 +20,7 @@ import { AnalyticsModule } from '../analytics/analytics.module';
     AnalyticsModule,
   ],
   controllers: [EventsController],
-  providers: [EventsService],
+  providers: [EventsService, EventsScheduler],
   exports: [EventsService],
 })
 export class EventsModule {}

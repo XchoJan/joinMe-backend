@@ -130,6 +130,11 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
                 data: data ? this.stringifyData(data) : undefined,
                 android: {
                     priority: 'high',
+                    notification: {
+                        channelId: 'default',
+                        sound: 'default',
+                        icon: 'ic_notification',
+                    },
                 },
                 apns: {
                     headers: {

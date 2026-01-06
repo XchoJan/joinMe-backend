@@ -114,6 +114,12 @@ export class NotificationsService {
         // Android настройки
         android: {
           priority: 'high',
+          notification: {
+            channelId: 'default',
+            sound: 'default',
+            icon: 'ic_notification', // Иконка уведомлений (должна быть в drawable папках)
+            // clickAction не нужен для React Native Firebase - приложение открывается автоматически
+          },
         },
         // iOS настройки (упрощенные, без APNs сертификата для тестирования)
         apns: {

@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const events_controller_1 = require("./events.controller");
 const events_service_1 = require("./events.service");
+const events_scheduler_1 = require("./events.scheduler");
 const event_entity_1 = require("../entities/event.entity");
 const event_request_entity_1 = require("../entities/event-request.entity");
 const chat_entity_1 = require("../entities/chat.entity");
@@ -31,7 +32,7 @@ exports.EventsModule = EventsModule = __decorate([
             analytics_module_1.AnalyticsModule,
         ],
         controllers: [events_controller_1.EventsController],
-        providers: [events_service_1.EventsService],
+        providers: [events_service_1.EventsService, events_scheduler_1.EventsScheduler],
         exports: [events_service_1.EventsService],
     })
 ], EventsModule);

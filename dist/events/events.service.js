@@ -65,10 +65,14 @@ let EventsService = class EventsService {
         return savedEvent;
     }
     async findAll(city) {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
         const query = this.eventsRepository
             .createQueryBuilder('event')
             .leftJoinAndSelect('event.author', 'author')
-            .where('event.status = :status', { status: 'active' });
+            .where('event.status = :status', { status: 'active' })
+            .andWhere('(event.date > :today OR (event.date = :today AND event.time >= :currentTime))', { today, currentTime });
         if (city && city !== 'all') {
             query.andWhere('event.city = :city', { city });
         }
@@ -85,18 +89,30 @@ let EventsService = class EventsService {
         return event;
     }
     async findByAuthor(authorId) {
-        return await this.eventsRepository.find({
-            where: { authorId, status: 'active' },
-            relations: ['author'],
-            order: { createdAt: 'DESC' },
-        });
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
+        return await this.eventsRepository
+            .createQueryBuilder('event')
+            .leftJoinAndSelect('event.author', 'author')
+            .where('event.authorId = :authorId', { authorId })
+            .andWhere('event.status = :status', { status: 'active' })
+            .andWhere('(event.date > :today OR (event.date = :today AND event.time >= :currentTime))', { today, currentTime })
+            .orderBy('event.createdAt', 'DESC')
+            .getMany();
     }
     async findByParticipant(userId) {
-        return await this.eventsRepository.find({
-            where: { status: 'active' },
-            relations: ['author'],
-            order: { createdAt: 'DESC' },
-        }).then(events => events.filter(event => event.participants?.includes(userId) && event.authorId !== userId));
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
+        return await this.eventsRepository
+            .createQueryBuilder('event')
+            .leftJoinAndSelect('event.author', 'author')
+            .where('event.status = :status', { status: 'active' })
+            .andWhere('(event.date > :today OR (event.date = :today AND event.time >= :currentTime))', { today, currentTime })
+            .orderBy('event.createdAt', 'DESC')
+            .getMany()
+            .then(events => events.filter(event => event.participants?.includes(userId) && event.authorId !== userId));
     }
     async update(id, eventData) {
         await this.eventsRepository.update(id, eventData);
@@ -325,6 +341,53 @@ let EventsService = class EventsService {
             throw new Error('Event not found after leaving');
         }
         return updatedEvent;
+    }
+    async deleteExpiredEvents() {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
+        const expiredEvents = await this.eventsRepository
+            .createQueryBuilder('event')
+            .where('event.status = :status', { status: 'active' })
+            .andWhere('(event.date < :today OR (event.date = :today AND event.time < :currentTime))', { today, currentTime })
+            .getMany();
+        if (expiredEvents.length === 0) {
+            return 0;
+        }
+        let deletedCount = 0;
+        for (const event of expiredEvents) {
+            try {
+                const chats = await this.chatsRepository.find({
+                    where: { eventId: event.id },
+                });
+                for (const chat of chats) {
+                    try {
+                        await this.messagesRepository.delete({ chatId: chat.id });
+                    }
+                    catch (error) {
+                        console.error(`Error deleting messages for chat ${chat.id}:`, error);
+                    }
+                }
+                try {
+                    await this.chatsRepository.delete({ eventId: event.id });
+                }
+                catch (error) {
+                    console.error('Error deleting chats:', error);
+                }
+                try {
+                    await this.requestsRepository.delete({ eventId: event.id });
+                }
+                catch (error) {
+                    console.error('Error deleting requests:', error);
+                }
+                await this.eventsRepository.remove(event);
+                deletedCount++;
+            }
+            catch (error) {
+                console.error(`Error deleting expired event ${event.id}:`, error);
+            }
+        }
+        return deletedCount;
     }
 };
 exports.EventsService = EventsService;

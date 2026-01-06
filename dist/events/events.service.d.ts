@@ -30,4 +30,5 @@ export declare class EventsService {
     delete(id: string, authorId: string): Promise<boolean>;
     removeParticipant(eventId: string, userId: string, authorId: string): Promise<Event>;
     leaveEvent(eventId: string, userId: string): Promise<Event>;
+    deleteExpiredEvents(): Promise<number>;
 }

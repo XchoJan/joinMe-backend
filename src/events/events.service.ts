@@ -67,10 +67,20 @@ export class EventsService {
   }
 
   async findAll(city?: string): Promise<Event[]> {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const currentTime = now.toTimeString().split(' ')[0].substring(0, 5); // HH:MM format
+
     const query = this.eventsRepository
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.author', 'author')
-      .where('event.status = :status', { status: 'active' });
+      .where('event.status = :status', { status: 'active' })
+      // Фильтруем события: дата должна быть >= сегодня
+      // Если дата = сегодня, то время должно быть >= текущего времени
+      .andWhere(
+        '(event.date > :today OR (event.date = :today AND event.time >= :currentTime))',
+        { today, currentTime }
+      );
 
     if (city && city !== 'all') {
       query.andWhere('event.city = :city', { city });
@@ -91,23 +101,45 @@ export class EventsService {
   }
 
   async findByAuthor(authorId: string): Promise<Event[]> {
-    return await this.eventsRepository.find({
-      where: { authorId, status: 'active' },
-      relations: ['author'],
-      order: { createdAt: 'DESC' },
-    });
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const currentTime = now.toTimeString().split(' ')[0].substring(0, 5); // HH:MM format
+
+    return await this.eventsRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.author', 'author')
+      .where('event.authorId = :authorId', { authorId })
+      .andWhere('event.status = :status', { status: 'active' })
+      // Фильтруем события: дата должна быть >= сегодня
+      .andWhere(
+        '(event.date > :today OR (event.date = :today AND event.time >= :currentTime))',
+        { today, currentTime }
+      )
+      .orderBy('event.createdAt', 'DESC')
+      .getMany();
   }
 
   async findByParticipant(userId: string): Promise<Event[]> {
-    return await this.eventsRepository.find({
-      where: { status: 'active' },
-      relations: ['author'],
-      order: { createdAt: 'DESC' },
-    }).then(events => 
-      events.filter(event => 
-        event.participants?.includes(userId) && event.authorId !== userId
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const currentTime = now.toTimeString().split(' ')[0].substring(0, 5); // HH:MM format
+
+    return await this.eventsRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.author', 'author')
+      .where('event.status = :status', { status: 'active' })
+      // Фильтруем события: дата должна быть >= сегодня
+      .andWhere(
+        '(event.date > :today OR (event.date = :today AND event.time >= :currentTime))',
+        { today, currentTime }
       )
-    );
+      .orderBy('event.createdAt', 'DESC')
+      .getMany()
+      .then(events => 
+        events.filter(event => 
+          event.participants?.includes(userId) && event.authorId !== userId
+        )
+      );
   }
 
   async update(id: string, eventData: Partial<Event>): Promise<Event | null> {
@@ -414,6 +446,69 @@ export class EventsService {
       throw new Error('Event not found after leaving');
     }
     return updatedEvent;
+  }
+
+  async deleteExpiredEvents(): Promise<number> {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const currentTime = now.toTimeString().split(' ')[0].substring(0, 5); // HH:MM format
+
+    // Находим все прошедшие события
+    const expiredEvents = await this.eventsRepository
+      .createQueryBuilder('event')
+      .where('event.status = :status', { status: 'active' })
+      .andWhere(
+        '(event.date < :today OR (event.date = :today AND event.time < :currentTime))',
+        { today, currentTime }
+      )
+      .getMany();
+
+    if (expiredEvents.length === 0) {
+      return 0;
+    }
+
+    let deletedCount = 0;
+
+    // Удаляем каждое прошедшее событие со всеми связанными данными
+    for (const event of expiredEvents) {
+      try {
+        // Находим все чаты для этого события
+        const chats = await this.chatsRepository.find({
+          where: { eventId: event.id },
+        });
+
+        // Удаляем все сообщения из всех чатов этого события
+        for (const chat of chats) {
+          try {
+            await this.messagesRepository.delete({ chatId: chat.id });
+          } catch (error) {
+            console.error(`Error deleting messages for chat ${chat.id}:`, error);
+          }
+        }
+
+        // Удаляем все чаты
+        try {
+          await this.chatsRepository.delete({ eventId: event.id });
+        } catch (error) {
+          console.error('Error deleting chats:', error);
+        }
+
+        // Удаляем все запросы
+        try {
+          await this.requestsRepository.delete({ eventId: event.id });
+        } catch (error) {
+          console.error('Error deleting requests:', error);
+        }
+
+        // Удаляем само событие
+        await this.eventsRepository.remove(event);
+        deletedCount++;
+      } catch (error) {
+        console.error(`Error deleting expired event ${event.id}:`, error);
+      }
+    }
+
+    return deletedCount;
   }
 }
 
