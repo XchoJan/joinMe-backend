@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -22,13 +22,28 @@ import { AnalyticsEvent } from './entities/analytics-event.entity';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env.local', '.env'],
     }),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'better-sqlite3',
-      database: 'joinme.db',
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST', 'localhost'),
+        port: configService.get<number>('DB_PORT', 5432),
+        username: configService.get<string>('DB_USERNAME', 'postgres'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME', 'joinme'),
       entities: [User, Event, EventRequest, Chat, Message, BlockedUser, AnalyticsEvent],
-      synchronize: true, // Only for development
+        synchronize: configService.get<string>('NODE_ENV') !== 'production', // false в production
+        migrations: ['dist/migrations/*.js'],
+        migrationsRun: true, // Автоматически запускает миграции при старте
+        logging: configService.get<string>('NODE_ENV') === 'development',
+        ssl: configService.get<string>('NODE_ENV') === 'production' ? {
+          rejectUnauthorized: false, // Для managed БД (AWS RDS, DigitalOcean)
+        } : false,
+      }),
+      inject: [ConfigService],
     }),
     UsersModule,
     EventsModule,

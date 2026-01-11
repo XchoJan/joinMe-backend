@@ -6,13 +6,44 @@ Backend API для мобильного приложения JoinMe на Nest.js
 
 - Nest.js
 - TypeORM
-- SQLite (локальная база данных)
+- PostgreSQL (база данных)
 - TypeScript
+- Socket.io (WebSocket)
+- Firebase Admin (push-уведомления)
 
 ## Установка
 
 ```bash
 npm install
+```
+
+## Настройка базы данных
+
+1. Установите PostgreSQL (если еще не установлен):
+   - macOS: `brew install postgresql`
+   - Linux: `sudo apt-get install postgresql`
+   - Windows: скачайте с [официального сайта](https://www.postgresql.org/download/)
+
+2. Создайте базу данных:
+```bash
+createdb joinme
+# или через psql:
+psql -U postgres
+CREATE DATABASE joinme;
+```
+
+3. Создайте файл `.env` на основе `.env.example`:
+```bash
+cp .env.example .env
+```
+
+4. Заполните переменные окружения в `.env`:
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_NAME=joinme
 ```
 
 ## Запуск
@@ -27,6 +58,24 @@ npm run start:prod
 ```
 
 Сервер запустится на `http://localhost:3000`
+
+## Миграции базы данных
+
+При первом запуске миграции выполняются автоматически. Для ручного управления:
+
+```bash
+# Создать новую миграцию
+npm run migration:create src/migrations/MigrationName
+
+# Сгенерировать миграцию на основе изменений entities
+npm run migration:generate src/migrations/MigrationName
+
+# Применить миграции
+npm run migration:run
+
+# Откатить последнюю миграцию
+npm run migration:revert
+```
 
 ## API Endpoints
 
@@ -57,7 +106,9 @@ npm run start:prod
 
 ## База данных
 
-База данных SQLite создается автоматически в файле `joinme.db` при первом запуске.
+Используется PostgreSQL. Схема базы данных создается автоматически через миграции при первом запуске приложения.
+
+**Важно:** В production окружении `synchronize` отключен. Все изменения схемы должны выполняться через миграции.
 
 ## CORS
 

@@ -1,0 +1,4 @@
+# Папка для миграций базы данных
+
+Миграции создаются командой:
+npm run migration:generate src/migrations/MigrationName
