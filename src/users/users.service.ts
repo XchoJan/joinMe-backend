@@ -41,6 +41,10 @@ export class UsersService {
     if (userData.password) {
       userData.password = await bcrypt.hash(userData.password, 10);
     }
+    // Нормализуем photo URL: убираем домен и /api/, оставляем только относительный путь /uploads/...
+    if (userData.photo) {
+      userData.photo = this.normalizePhotoUrl(userData.photo);
+    }
     const user = this.usersRepository.create(userData);
     const savedUser = await this.usersRepository.save(user);
     
@@ -51,6 +55,36 @@ export class UsersService {
     );
     
     return savedUser;
+  }
+
+  /**
+   * Нормализует photo URL: убирает домен и /api/, оставляет только относительный путь /uploads/...
+   */
+  private normalizePhotoUrl(url: string): string {
+    if (!url) return url;
+    
+    // Убираем протокол и домен, если есть полный URL
+    url = url.replace(/^https?:\/\/[^\/]+/, '');
+    
+    // Убираем префикс /api/ в любом месте
+    url = url.replace(/\/api\//, '/');
+    
+    // Убираем ведущие слэши
+    url = url.replace(/^\/+/, '');
+    
+    // Если путь уже начинается с uploads/, добавляем ведущий слэш
+    if (url.startsWith('uploads/')) {
+      return '/' + url;
+    }
+    
+    // Если путь содержит uploads/ где-то внутри, извлекаем часть начиная с uploads/
+    const uploadsIndex = url.indexOf('uploads/');
+    if (uploadsIndex !== -1) {
+      return '/' + url.substring(uploadsIndex);
+    }
+    
+    // Если uploads нет, предполагаем что это относительный путь и добавляем /uploads/
+    return '/uploads/' + url;
   }
 
   async findOne(id: string): Promise<User | null> {
@@ -71,6 +105,10 @@ export class UsersService {
       if (!userData.password.startsWith('$2b$')) {
         userData.password = await bcrypt.hash(userData.password, 10);
       }
+    }
+    // Нормализуем photo URL: убираем домен и /api/, оставляем только относительный путь /uploads/...
+    if (userData.photo) {
+      userData.photo = this.normalizePhotoUrl(userData.photo);
     }
     await this.usersRepository.update(id, userData);
     return await this.findOne(id);

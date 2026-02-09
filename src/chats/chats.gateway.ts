@@ -4,6 +4,7 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
@@ -12,24 +13,33 @@ import { Injectable } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 
 @WebSocketGateway({
+  path: '/socket.io',
+  namespace: '/',
   cors: {
     origin: '*',
     credentials: true,
+    methods: ['GET', 'POST'],
   },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
 })
 @Injectable()
-export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   constructor(private chatsService: ChatsService) {}
+
+  afterInit(server: Server) {
+    console.log('✅ Socket.io server initialized');
+  }
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+    console.log(`❌ Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('join_chat')

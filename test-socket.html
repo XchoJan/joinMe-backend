@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.io Test</title>
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-connect {
+            background: #28a745;
+            color: white;
+        }
+        .btn-disconnect {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-test {
+            background: #007bff;
+            color: white;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            padding-left: 10px;
+        }
+        .log-entry.error {
+            border-left-color: #dc3545;
+            color: #dc3545;
+        }
+        .log-entry.success {
+            border-left-color: #28a745;
+            color: #28a745;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Socket.io Connection Test</h1>
+        
+        <div>
+            <label>Socket URL:</label>
+            <input type="text" id="socketUrl" value="https://musicialconnect.com/socket.io/" placeholder="https://musicialconnect.com/socket.io/">
+        </div>
+        
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div>
+            <button id="connectBtn" class="btn-connect" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" class="btn-disconnect" onclick="disconnect()" disabled>Disconnect</button>
+            <button id="testBtn" class="btn-test" onclick="testJoinChat()" disabled>Test Join Chat</button>
+        </div>
+        
+        <div>
+            <h3>Test Actions:</h3>
+            <input type="text" id="chatId" placeholder="Chat ID" value="test-chat-123">
+            <button onclick="joinChat()" disabled id="joinBtn">Join Chat</button>
+            <button onclick="leaveChat()" disabled id="leaveBtn">Leave Chat</button>
+        </div>
+        
+        <div>
+            <h3>Send Message:</h3>
+            <input type="text" id="userId" placeholder="User ID" value="test-user-123">
+            <input type="text" id="messageText" placeholder="Message text" value="Hello from test!">
+            <button onclick="sendMessage()" disabled id="sendBtn">Send Message</button>
+        </div>
+        
+        <div class="log" id="log">
+            <div class="log-entry">Ready to connect...</div>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        const socketUrlInput = document.getElementById('socketUrl');
+        const statusDiv = document.getElementById('status');
+        const logDiv = document.getElementById('log');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const testBtn = document.getElementById('testBtn');
+        const joinBtn = document.getElementById('joinBtn');
+        const leaveBtn = document.getElementById('leaveBtn');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(status, className) {
+            statusDiv.textContent = status;
+            statusDiv.className = `status ${className}`;
+        }
+
+        function connect() {
+            const url = socketUrlInput.value.trim();
+            if (!url) {
+                alert('Please enter Socket URL');
+                return;
+            }
+
+            log(`Connecting to ${url}...`, 'info');
+            updateStatus('Connecting...', 'connecting');
+            
+            socket = io(url, {
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5,
+            });
+
+            socket.on('connect', () => {
+                log('✅ Connected! Socket ID: ' + socket.id, 'success');
+                updateStatus('Connected: ' + socket.id, 'connected');
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                testBtn.disabled = false;
+                joinBtn.disabled = false;
+                leaveBtn.disabled = false;
+                sendBtn.disabled = false;
+            });
+
+            socket.on('disconnect', (reason) => {
+                log('❌ Disconnected: ' + reason, 'error');
+                updateStatus('Disconnected', 'disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                testBtn.disabled = true;
+                joinBtn.disabled = true;
+                leaveBtn.disabled = true;
+                sendBtn.disabled = true;
+            });
+
+            socket.on('connect_error', (error) => {
+                log('❌ Connection error: ' + error.message, 'error');
+                updateStatus('Connection Error', 'disconnected');
+            });
+
+            socket.on('new_message', (data) => {
+                log('📨 New message received: ' + JSON.stringify(data, null, 2), 'success');
+            });
+
+            socket.on('message_deleted', (data) => {
+                log('🗑️ Message deleted: ' + JSON.stringify(data, null, 2), 'info');
+            });
+
+            socket.on('all_messages_deleted', (data) => {
+                log('🗑️ All messages deleted: ' + JSON.stringify(data, null, 2), 'info');
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                log('Disconnected manually', 'info');
+            }
+        }
+
+        function testJoinChat() {
+            if (!socket || !socket.connected) {
+                alert('Not connected!');
+                return;
+            }
+
+            const chatId = 'test-chat-' + Date.now();
+            log(`Testing join_chat with chatId: ${chatId}`, 'info');
+            
+            socket.emit('join_chat', { chatId: chatId }, (response) => {
+                log('✅ Join chat response: ' + JSON.stringify(response, null, 2), 'success');
+            });
+        }
+
+        function joinChat() {
+            if (!socket || !socket.connected) {
+                alert('Not connected!');
+                return;
+            }
+
+            const chatId = document.getElementById('chatId').value;
+            if (!chatId) {
+                alert('Please enter Chat ID');
+                return;
+            }
+
+            log(`Joining chat: ${chatId}`, 'info');
+            socket.emit('join_chat', { chatId: chatId }, (response) => {
+                log('✅ Join chat response: ' + JSON.stringify(response, null, 2), 'success');
+            });
+        }
+
+        function leaveChat() {
+            if (!socket || !socket.connected) {
+                alert('Not connected!');
+                return;
+            }
+
+            const chatId = document.getElementById('chatId').value;
+            if (!chatId) {
+                alert('Please enter Chat ID');
+                return;
+            }
+
+            log(`Leaving chat: ${chatId}`, 'info');
+            socket.emit('leave_chat', { chatId: chatId }, (response) => {
+                log('✅ Leave chat response: ' + JSON.stringify(response, null, 2), 'success');
+            });
+        }
+
+        function sendMessage() {
+            if (!socket || !socket.connected) {
+                alert('Not connected!');
+                return;
+            }
+
+            const chatId = document.getElementById('chatId').value;
+            const userId = document.getElementById('userId').value;
+            const messageText = document.getElementById('messageText').value;
+
+            if (!chatId || !userId || !messageText) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            log(`Sending message to chat ${chatId}...`, 'info');
+            socket.emit('send_message', {
+                chatId: chatId,
+                userId: userId,
+                text: messageText
+            }, (response) => {
+                log('✅ Send message response: ' + JSON.stringify(response, null, 2), 'success');
+            });
+        }
+    </script>
+</body>
+</html>

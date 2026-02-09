@@ -70,8 +70,11 @@ export class UploadController {
       this.uploadService.deleteOldAvatar(oldPhotoUrl);
     }
 
-    // Возвращаем URL для доступа к файлу
-    const fileUrl = this.uploadService.getFileUrl(finalPath);
+    // Возвращаем URL для доступа к файлу (без префикса /api)
+    let fileUrl = this.uploadService.getFileUrl(finalPath);
+    
+    // Убираем префикс /api/ если он есть (в любом месте)
+    fileUrl = fileUrl.replace(/\/api\//, '/');
 
     return {
       url: fileUrl,

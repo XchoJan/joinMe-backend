@@ -18,7 +18,7 @@ async function bootstrap() {
         whitelist: true,
         transform: true,
     }));
-    const port = process.env.PORT ?? 3000;
+    const port = process.env.PORT ?? 4000;
     await app.listen(port);
     console.log(`🚀 Server is running on: http://localhost:${port}`);
     console.log(`📡 WebSocket is available on: ws://localhost:${port}`);

@@ -33,10 +33,11 @@ export class UploadService {
   }
 
   /**
-   * Возвращает относительный URL для доступа к файлу
+   * Возвращает относительный URL для доступа к файлу (без префикса /api)
    */
   getFileUrl(storagePath: string): string {
     const relativePath = path.relative(this.uploadsDir, storagePath);
+    // Возвращаем путь без /api префикса
     return `/uploads/${relativePath.replace(/\\/g, '/')}`;
   }
 
@@ -60,8 +61,8 @@ export class UploadService {
     if (!oldPhotoUrl) return;
 
     try {
-      // Извлекаем путь из URL (убираем /uploads/)
-      const relativePath = oldPhotoUrl.replace('/uploads/', '');
+      // Извлекаем путь из URL (убираем /uploads/ или /api/uploads/)
+      const relativePath = oldPhotoUrl.replace(/^\/api?\/?uploads\//, '').replace(/^\/uploads\//, '');
       const fullPath = path.join(this.uploadsDir, relativePath);
       this.deleteFile(fullPath);
     } catch (error) {
