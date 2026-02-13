@@ -10,6 +10,7 @@ import { ChatsModule } from './chats/chats.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { UploadModule } from './upload/upload.module';
 import { AdminModule } from './admin/admin.module';
+import { TwogisModule } from './twogis/twogis.module';
 import { User } from './entities/user.entity';
 import { Event } from './entities/event.entity';
 import { EventRequest } from './entities/event-request.entity';
@@ -51,6 +52,7 @@ import { AnalyticsEvent } from './entities/analytics-event.entity';
     NotificationsModule,
     UploadModule,
     AdminModule,
+    TwogisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,0 +1,31 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const core_1 = require("@nestjs/core");
+const common_1 = require("@nestjs/common");
+const path_1 = require("path");
+const app_module_1 = require("./app.module");
+async function bootstrap() {
+    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.setGlobalPrefix('api');
+    app.enableCors({
+        origin: true,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+        exposedHeaders: ['Content-Range', 'X-Content-Range'],
+        maxAge: 86400,
+    });
+    app.useStaticAssets((0, path_1.join)(__dirname, '..', 'uploads'), {
+        prefix: '/uploads/',
+    });
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        transform: true,
+    }));
+    const port = process.env.PORT ?? 4000;
+    await app.listen(port, '0.0.0.0');
+    console.log(`🚀 Server is running on: http://0.0.0.0:${port}`);
+    console.log(`📡 WebSocket is available on: ws://0.0.0.0:${port}`);
+}
+bootstrap();
+//# sourceMappingURL=main.js.map
